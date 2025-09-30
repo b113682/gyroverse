@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>3Dモデル VR体験</title>
+    <meta name="description" content="ステレオスコピックVR体験">
+    <!-- A-Frameライブラリの読み込み -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+</head>
+<body>
+    <!-- VRシーンの定義 -->
+    <a-scene vr-mode-ui="enabled: true">
+        
+        <!-- 3Dモデルの配置 -->
+        <a-entity 
+            id="my-model"
+            gltf-model="url(your-model.glb)" 
+            position="0 1.6 -3"
+            scale="1 1 1"
+            rotation="0 0 0">
+        </a-entity>
+        
+        <!-- 環境光（全体を照らす光） -->
+        <a-light type="ambient" color="#BBB"></a-light>
+        
+        <!-- 指向性ライト（特定方向からの光） -->
+        <a-light type="directional" color="#FFF" intensity="0.6" position="-0.5 1 1"></a-light>
+        
+        <!-- 空（背景） -->
+        <a-sky color="#ECECEC"></a-sky>
+        
+        <!-- カメラ（視点） -->
+        <a-camera>
+            <!-- カーソル（視線操作用） -->
+            <a-cursor></a-cursor>
+        </a-camera>
+        
+    </a-scene>
+</body>
+</html>
