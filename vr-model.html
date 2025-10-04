@@ -13,12 +13,20 @@
         
         <!-- 3Dモデルの配置 -->
         <a-entity 
-            id="my-model"
-            gltf-model="url(your-model.glb)" 
-            position="0 1.6 -3"
+            id="right-model"
+            gltf-model="url(LS-t_hy.glb)" 
+            position="1 0.8 -2"
             scale="1 1 1"
             rotation="0 0 0">
         </a-entity>
+        <a-entity 
+            id="left-model"
+            gltf-model="url(LS-t_MAI.glb)" 
+            position="-1 0.8 -2"
+            scale="1 1 1"
+            rotation="0 0 0">
+        </a-entity>
+
         
         <!-- 環境光（全体を照らす光） -->
         <a-light type="ambient" color="#BBB"></a-light>
