@@ -7,6 +7,51 @@
     <!-- A-Frameライブラリの読み込み -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script>
+        // タッチで前進するコンポーネント
+        AFRAME.registerComponent('touch-to-move', {
+            schema: {
+                speed: {default: 0.1}
+            },
+            init: function() {
+                this.moving = false;
+                this.touchCount = 0;
+                
+                this.touchStartHandler = this.onTouchStart.bind(this);
+                this.touchEndHandler = this.onTouchEnd.bind(this);
+                
+                window.addEventListener('touchstart', this.touchStartHandler);
+                window.addEventListener('touchend', this.touchEndHandler);
+            },
+            onTouchStart: function(evt) {
+                this.touchCount = evt.touches.length;
+                if (evt.touches.length === 1) {
+                    this.moving = true;
+                }
+            },
+            onTouchEnd: function(evt) {
+                this.touchCount = evt.touches.length;
+                if (evt.touches.length === 0) {
+                    this.moving = false;
+                }
+            },
+            tick: function() {
+                if (this.moving && this.touchCount === 1) {
+                    var camera = this.el;
+                    var direction = new THREE.Vector3();
+                    camera.object3D.getWorldDirection(direction);
+                    
+                    var position = camera.getAttribute('position');
+                    position.x += direction.x * this.data.speed;
+                    position.y += direction.y * this.data.speed;
+                    position.z += direction.z * this.data.speed;
+                    camera.setAttribute('position', position);
+                }
+            },
+            remove: function() {
+                window.removeEventListener('touchstart', this.touchStartHandler);
+                window.removeEventListener('touchend', this.touchEndHandler);
+            }
+        });
         // ピンチでズームするコンポーネント
         AFRAME.registerComponent('pinch-zoom', {
             init: function() {
@@ -57,7 +102,7 @@
         <!-- カメラリグ（移動可能なカメラコンテナ） -->
         <a-entity id="rig" 
                   movement-controls="fly: false; speed: 0.3"
-                  position="0 1.6 0">
+                  position="0 0.8 0">
             
             <!-- カメラ（視点） -->
             <a-camera look-controls="pointerLockEnabled: true">
@@ -71,14 +116,14 @@
             id="row2"
             gltf-model="url(LS-t_hy.glb)" 
             position="1 0.8 -2"
-            scale="1 1 1"
+            scale="1.4 1.4 1.4"
             rotation="45 0 0">
         </a-entity>
         <a-entity 
             id="ro3"
             gltf-model="url(LS-t_MAI.glb)" 
             position="0 0.8 -2"
-            scale="1 1 1"
+            scale="2 2 2"
             rotation="0 0 0">
         </a-entity>
 
