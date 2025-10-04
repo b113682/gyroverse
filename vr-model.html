@@ -1,13 +1,32 @@
-html<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>3Dモデル VR体験</title>
+    <title>3Dモデル VR体験 - デバッグ版</title>
     <meta name="description" content="ステレオスコピックVR体験">
     <!-- A-Frameライブラリの読み込み -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script>
-        // タッチで前進するコンポーネント
+        // デバッグ情報表示用
+        var debugInfo = {
+            position: '',
+            direction: '',
+            moving: false,
+            vrMode: false
+        };
+
+        function updateDebugDisplay() {
+            var debugEl = document.getElementById('debug');
+            if (debugEl) {
+                debugEl.innerHTML = 
+                    '位置: ' + debugInfo.position + '<br>' +
+                    '方向: ' + debugInfo.direction + '<br>' +
+                    '移動中: ' + debugInfo.moving + '<br>' +
+                    'VRモード: ' + debugInfo.vrMode;
+            }
+        }
+
+        // タッチで前進するコンポーネント（修正版）
         AFRAME.registerComponent('touch-to-move', {
             schema: {
                 speed: {default: 0.1}
@@ -26,12 +45,14 @@ html<!DOCTYPE html>
                 this.touchCount = evt.touches.length;
                 if (evt.touches.length === 1) {
                     this.moving = true;
+                    debugInfo.moving = true;
                 }
             },
             onTouchEnd: function(evt) {
                 this.touchCount = evt.touches.length;
                 if (evt.touches.length === 0) {
                     this.moving = false;
+                    debugInfo.moving = false;
                 }
             },
             tick: function() {
@@ -40,17 +61,26 @@ html<!DOCTYPE html>
                     var camera = rig.querySelector('a-camera');
                     if (!camera) return;
                     
-                    var direction = new THREE.Vector3();
-                    camera.object3D.getWorldDirection(direction);
+                    // カメラの回転から方向を取得
+                    var rotation = camera.getAttribute('rotation');
+                    var yaw = THREE.MathUtils.degToRad(rotation.y);
                     
-                    // 水平方向のみに制限（Y軸を0にする）
-                    direction.y = 0;
-                    direction.normalize();
+                    // Y軸回転のみを使用して水平方向を計算
+                    var direction = new THREE.Vector3(
+                        -Math.sin(yaw),
+                        0,
+                        -Math.cos(yaw)
+                    );
+                    
+                    debugInfo.direction = 'x:' + direction.x.toFixed(2) + ' z:' + direction.z.toFixed(2);
                     
                     var position = rig.getAttribute('position');
                     position.x += direction.x * this.data.speed;
                     position.z += direction.z * this.data.speed;
                     rig.setAttribute('position', position);
+                    
+                    debugInfo.position = 'x:' + position.x.toFixed(2) + ' y:' + position.y.toFixed(2) + ' z:' + position.z.toFixed(2);
+                    updateDebugDisplay();
                 }
             },
             remove: function() {
@@ -111,39 +141,53 @@ html<!DOCTYPE html>
             }
         });
 
-        // VRモードで視線方向に自動移動
+        // VRモードで視線方向に自動移動（修正版）
         AFRAME.registerComponent('gaze-move-vr', {
             schema: {
-                speed: {default: 0.03},
-                enabled: {default: false}
+                speed: {default: 0.05}
             },
             init: function() {
                 var self = this;
+                this.vrEnabled = false;
+                
                 this.el.sceneEl.addEventListener('enter-vr', function() {
-                    self.data.enabled = true;
+                    self.vrEnabled = true;
+                    debugInfo.vrMode = true;
+                    console.log('VRモード開始');
                 });
+                
                 this.el.sceneEl.addEventListener('exit-vr', function() {
-                    self.data.enabled = false;
+                    self.vrEnabled = false;
+                    debugInfo.vrMode = false;
+                    console.log('VRモード終了');
                 });
             },
             tick: function() {
-                if (!this.data.enabled) return;
+                if (!this.vrEnabled) return;
                 
                 var rig = this.el;
                 var camera = rig.querySelector('a-camera');
                 if (!camera) return;
                 
-                var direction = new THREE.Vector3();
-                camera.object3D.getWorldDirection(direction);
+                // カメラの回転から方向を取得
+                var rotation = camera.getAttribute('rotation');
+                var yaw = THREE.MathUtils.degToRad(rotation.y);
                 
-                // 水平方向のみに制限
-                direction.y = 0;
-                direction.normalize();
+                // Y軸回転のみを使用して水平方向を計算
+                var direction = new THREE.Vector3(
+                    -Math.sin(yaw),
+                    0,
+                    -Math.cos(yaw)
+                );
                 
                 var position = rig.getAttribute('position');
                 position.x += direction.x * this.data.speed;
                 position.z += direction.z * this.data.speed;
                 rig.setAttribute('position', position);
+                
+                debugInfo.position = 'x:' + position.x.toFixed(2) + ' y:' + position.y.toFixed(2) + ' z:' + position.z.toFixed(2);
+                debugInfo.direction = 'x:' + direction.x.toFixed(2) + ' z:' + direction.z.toFixed(2);
+                updateDebugDisplay();
             }
         });
     </script>
@@ -161,6 +205,18 @@ html<!DOCTYPE html>
             font-size: 14px;
             z-index: 1000;
         }
+        #debug {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -173,15 +229,19 @@ html<!DOCTYPE html>
         • VRモード: 見た方向に自動移動
     </div>
 
+    <!-- デバッグ情報 -->
+    <div id="debug">
+        デバッグ情報を読み込み中...
+    </div>
+
     <!-- VRシーンの定義 -->
     <a-scene vr-mode-ui="enabled: true">
         <!-- カメラリグ（移動可能なカメラコンテナ） -->
         <a-entity id="rig" 
                   touch-to-move="speed: 0.1"
                   pinch-zoom
-                  gaze-move-vr="speed: 0.03"
-                  position="0 0.2 0">
-            
+                  gaze-move-vr="speed: 0.05"
+                  position="0 1.6 3">
             <!-- カメラ（視点） -->
             <a-camera look-controls="pointerLockEnabled: false"
                       fov="80">
@@ -196,7 +256,7 @@ html<!DOCTYPE html>
             gltf-model="url(LS-t_hy.glb)" 
             position="1 1.6 -2"
             scale="2 2 2"
-            rotation="45 0 0">
+            rotation="0 0 0">
         </a-entity>
         <a-entity 
             id="ro3"
