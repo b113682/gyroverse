@@ -6,6 +6,50 @@
     <meta name="description" content="ステレオスコピックVR体験">
     <!-- A-Frameライブラリの読み込み -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script>
+        // ピンチでズームするコンポーネント
+        AFRAME.registerComponent('pinch-zoom', {
+            init: function() {
+                this.initialDistance = 0;
+                this.currentFov = 80;
+                
+                this.touchStartHandler = this.onTouchStart.bind(this);
+                this.touchMoveHandler = this.onTouchMove.bind(this);
+                
+                window.addEventListener('touchstart', this.touchStartHandler);
+                window.addEventListener('touchmove', this.touchMoveHandler);
+            },
+            onTouchStart: function(evt) {
+                if (evt.touches.length === 2) {
+                    var dx = evt.touches[0].pageX - evt.touches[1].pageX;
+                    var dy = evt.touches[0].pageY - evt.touches[1].pageY;
+                    this.initialDistance = Math.sqrt(dx * dx + dy * dy);
+                }
+            },
+            onTouchMove: function(evt) {
+                if (evt.touches.length === 2) {
+                    var dx = evt.touches[0].pageX - evt.touches[1].pageX;
+                    var dy = evt.touches[0].pageY - evt.touches[1].pageY;
+                    var distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (this.initialDistance > 0) {
+                        var ratio = distance / this.initialDistance;
+                        var newFov = this.currentFov / ratio;
+                        newFov = Math.max(30, Math.min(100, newFov));
+                        
+                        this.el.setAttribute('camera', 'fov', newFov);
+                    }
+                    
+                    this.initialDistance = distance;
+                    this.currentFov = this.el.getAttribute('camera').fov;
+                }
+            },
+            remove: function() {
+                window.removeEventListener('touchstart', this.touchStartHandler);
+                window.removeEventListener('touchmove', this.touchMoveHandler);
+            }
+        });
+    </script>
 </head>
 <body>
     <!-- VRシーンの定義 -->
@@ -28,14 +72,14 @@
             gltf-model="url(LS-t_hy.glb)" 
             position="1 0.8 -2"
             scale="1 1 1"
-            rotation="0 0 0">
+            rotation="45 0 0">
         </a-entity>
         <a-entity 
             id="ro3"
             gltf-model="url(LS-t_MAI.glb)" 
             position="0 0.8 -2"
             scale="1 1 1"
-            rotation="45 0 0">
+            rotation="0 0 0">
         </a-entity>
 
         
