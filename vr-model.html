@@ -24,10 +24,12 @@
             },
             onTouchStart: function(evt) {
                 this.touchCount = evt.touches.length;
+                // VRモードでは1タップで移動開始
                 if (evt.touches.length === 1) {
                     this.moving = true;
                 }
-            },
+            }
+        },
             onTouchEnd: function(evt) {
                 this.touchCount = evt.touches.length;
                 if (evt.touches.length === 0) {
@@ -138,7 +140,7 @@
         <a-entity id="rig" 
                   touch-to-move="speed: 0.1"
                   pinch-zoom
-                  position="0 1.6 3">
+                  position="0 0.2 0">
             
             <!-- カメラ（視点） -->
             <a-camera look-controls="pointerLockEnabled: false"
