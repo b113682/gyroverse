@@ -36,15 +36,17 @@
             },
             tick: function() {
                 if (this.moving && this.touchCount === 1) {
-                    var camera = this.el;
+                    var rig = this.el;
+                    var camera = rig.querySelector('a-camera');
+                    if (!camera) return;
+                    
                     var direction = new THREE.Vector3();
                     camera.object3D.getWorldDirection(direction);
                     
-                    var position = camera.getAttribute('position');
+                    var position = rig.getAttribute('position');
                     position.x += direction.x * this.data.speed;
-                    position.y += direction.y * this.data.speed;
                     position.z += direction.z * this.data.speed;
-                    camera.setAttribute('position', position);
+                    rig.setAttribute('position', position);
                 }
             },
             remove: function() {
@@ -52,6 +54,7 @@
                 window.removeEventListener('touchend', this.touchEndHandler);
             }
         });
+
         // ピンチでズームするコンポーネント
         AFRAME.registerComponent('pinch-zoom', {
             init: function() {
@@ -66,6 +69,7 @@
             },
             onTouchStart: function(evt) {
                 if (evt.touches.length === 2) {
+                    evt.preventDefault();
                     var dx = evt.touches[0].pageX - evt.touches[1].pageX;
                     var dy = evt.touches[0].pageY - evt.touches[1].pageY;
                     this.initialDistance = Math.sqrt(dx * dx + dy * dy);
@@ -73,6 +77,8 @@
             },
             onTouchMove: function(evt) {
                 if (evt.touches.length === 2) {
+                    evt.preventDefault();
+                    
                     var dx = evt.touches[0].pageX - evt.touches[1].pageX;
                     var dy = evt.touches[0].pageY - evt.touches[1].pageY;
                     var distance = Math.sqrt(dx * dx + dy * dy);
@@ -82,11 +88,17 @@
                         var newFov = this.currentFov / ratio;
                         newFov = Math.max(30, Math.min(100, newFov));
                         
-                        this.el.setAttribute('camera', 'fov', newFov);
+                        var camera = this.el.querySelector('a-camera');
+                        if (camera) {
+                            camera.setAttribute('camera', 'fov', newFov);
+                        }
                     }
                     
                     this.initialDistance = distance;
-                    this.currentFov = this.el.getAttribute('camera').fov;
+                    var camera = this.el.querySelector('a-camera');
+                    if (camera) {
+                        this.currentFov = camera.getAttribute('camera').fov;
+                    }
                 }
             },
             remove: function() {
@@ -95,17 +107,42 @@
             }
         });
     </script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #instructions {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            z-index: 1000;
+        }
+    </style>
 </head>
 <body>
+    <!-- 操作説明 -->
+    <div id="instructions">
+        📱 操作方法:<br>
+        • 1本指タッチ(長押し): 前進<br>
+        • スワイプ: 視点移動<br>
+        • 2本指ピンチ: ズーム
+    </div>
+
     <!-- VRシーンの定義 -->
     <a-scene vr-mode-ui="enabled: true">
         <!-- カメラリグ（移動可能なカメラコンテナ） -->
         <a-entity id="rig" 
-                  movement-controls="fly: false; speed: 0.3"
-                  position="0 0 0">
+                  touch-to-move="speed: 0.1"
+                  pinch-zoom
+                  position="0 1.6 3">
             
             <!-- カメラ（視点） -->
-            <a-camera look-controls="pointerLockEnabled: true">
+            <a-camera look-controls="pointerLockEnabled: false"
+                      fov="80">
                 <!-- カーソル（視線操作用） -->
                 <a-cursor></a-cursor>
             </a-camera>
@@ -144,8 +181,6 @@
                  height="10" 
                  color="#7BC8A4">
         </a-plane>
-        
-        <!-- カメラ（視点） -->
         
     </a-scene>
 </body>
