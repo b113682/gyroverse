@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -24,12 +24,10 @@
             },
             onTouchStart: function(evt) {
                 this.touchCount = evt.touches.length;
-                // VRモードでは1タップで移動開始
                 if (evt.touches.length === 1) {
                     this.moving = true;
                 }
-            }
-        },
+            },
             onTouchEnd: function(evt) {
                 this.touchCount = evt.touches.length;
                 if (evt.touches.length === 0) {
@@ -44,6 +42,10 @@
                     
                     var direction = new THREE.Vector3();
                     camera.object3D.getWorldDirection(direction);
+                    
+                    // 水平方向のみに制限（Y軸を0にする）
+                    direction.y = 0;
+                    direction.normalize();
                     
                     var position = rig.getAttribute('position');
                     position.x += direction.x * this.data.speed;
@@ -108,6 +110,42 @@
                 window.removeEventListener('touchmove', this.touchMoveHandler);
             }
         });
+
+        // VRモードで視線方向に自動移動
+        AFRAME.registerComponent('gaze-move-vr', {
+            schema: {
+                speed: {default: 0.03},
+                enabled: {default: false}
+            },
+            init: function() {
+                var self = this;
+                this.el.sceneEl.addEventListener('enter-vr', function() {
+                    self.data.enabled = true;
+                });
+                this.el.sceneEl.addEventListener('exit-vr', function() {
+                    self.data.enabled = false;
+                });
+            },
+            tick: function() {
+                if (!this.data.enabled) return;
+                
+                var rig = this.el;
+                var camera = rig.querySelector('a-camera');
+                if (!camera) return;
+                
+                var direction = new THREE.Vector3();
+                camera.object3D.getWorldDirection(direction);
+                
+                // 水平方向のみに制限
+                direction.y = 0;
+                direction.normalize();
+                
+                var position = rig.getAttribute('position');
+                position.x += direction.x * this.data.speed;
+                position.z += direction.z * this.data.speed;
+                rig.setAttribute('position', position);
+            }
+        });
     </script>
     <style>
         body { margin: 0; overflow: hidden; }
@@ -131,7 +169,8 @@
         📱 操作方法:<br>
         • 1本指タッチ(長押し): 前進<br>
         • スワイプ: 視点移動<br>
-        • 2本指ピンチ: ズーム
+        • 2本指ピンチ: ズーム<br>
+        • VRモード: 見た方向に自動移動
     </div>
 
     <!-- VRシーンの定義 -->
@@ -140,6 +179,7 @@
         <a-entity id="rig" 
                   touch-to-move="speed: 0.1"
                   pinch-zoom
+                  gaze-move-vr="speed: 0.03"
                   position="0 0.2 0">
             
             <!-- カメラ（視点） -->
