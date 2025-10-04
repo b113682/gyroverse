@@ -10,21 +10,32 @@
 <body>
     <!-- VRシーンの定義 -->
     <a-scene vr-mode-ui="enabled: true">
-        
+        <!-- カメラリグ（移動可能なカメラコンテナ） -->
+        <a-entity id="rig" 
+                  movement-controls="fly: false; speed: 0.3"
+                  position="0 1.6 0">
+            
+            <!-- カメラ（視点） -->
+            <a-camera look-controls="pointerLockEnabled: true">
+                <!-- カーソル（視線操作用） -->
+                <a-cursor></a-cursor>
+            </a-camera>
+        </a-entity>
+
         <!-- 3Dモデルの配置 -->
         <a-entity 
             id="right-model"
             gltf-model="url(LS-t_hy.glb)" 
             position="1 0.8 -2"
             scale="1 1 1"
-            rotation="0 0 0">
+            rotation="90 0 0">
         </a-entity>
         <a-entity 
             id="left-model"
             gltf-model="url(LS-t_MAI.glb)" 
             position="-1 0.8 -2"
             scale="1 1 1"
-            rotation="0 0 0">
+            rotation="0 90 0">
         </a-entity>
 
         
@@ -36,12 +47,16 @@
         
         <!-- 空（背景） -->
         <a-sky color="#ECECEC"></a-sky>
+
+        <!-- 地面（参考用） -->
+        <a-plane position="0 0 0" 
+                 rotation="-90 0 0" 
+                 width="10" 
+                 height="10" 
+                 color="#7BC8A4">
+        </a-plane>
         
         <!-- カメラ（視点） -->
-        <a-camera>
-            <!-- カーソル（視線操作用） -->
-            <a-cursor></a-cursor>
-        </a-camera>
         
     </a-scene>
 </body>
